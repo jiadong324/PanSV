@@ -1,6 +1,7 @@
 MANIFEST: manifest.tab
-DETECT_CALLERS: pbsv,sawfish,sniffles,delly,cutesv
+DETECT_CALLERS: pbsv,sawfish,sniffles,delly,cutesv,longcallD
 MERGE_CALLERS: pav,pbsv,sawfish,sniffles,delly,cutesv
+REFV: CHM13
 REF:
   CHM13: /net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/T2T-CHM13v2.fasta
   GRCh38: /net/eichler/vol28/eee_shared/assemblies/hg38/no_alt/hg38.no_alt.fa
@@ -10,4 +11,9 @@ TRMASK:
 CPRMASK:
   CHM13: /net/eichler/vol28/projects/medical_reference/nobackups/ref_diff/chm13/chm13v2.0_complex_sat.bed
   GRCh38: /net/eichler/vol28/projects/medical_reference/nobackups/ref_diff/hg38/hg38_complexRegions.bed
-
+HEADERS:
+  CHM13: /net/eichler/vol28/projects/medical_reference/nobackups/Scripts/MedRef/SampleSet/chm13_headers.txt
+  GRCh38: /net/eichler/vol28/projects/medical_reference/nobackups/Scripts/MedRef/SampleSet/hg38_headers.txt
+SEGDUP:
+  CHM13: /net/eichler/vol28/projects/medical_reference/nobackups/ref_diff/chm13/chm13v2.0_SD.bed.gz
+  GRCh38: /net/eichler/vol28/projects/medical_reference/nobackups/ref_diff/hg38/seg_dup.bed.gz

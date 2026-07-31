@@ -22,6 +22,18 @@ JOB_COUNT=$1
 
 shift
 
+## Pull out a "_REFV" token (e.g. "_CHM13") and turn it into --config REFV=CHM13,
+## leaving the remaining args (target rule, -np, etc.) untouched.
+#ARGS=()
+#CONFIG_ARGS=()
+#for arg in "$@"; do
+#    if [[ "$arg" =~ ^_(.+)$ ]]; then
+#        CONFIG_ARGS=(--config "REFV=${BASH_REMATCH[1]}")
+#    else
+#        ARGS+=("$arg")
+#    fi
+#done
+
 # Run
 snakemake -s ${SOURCE_DIR}/Snakefile \
         -j ${JOB_COUNT} \

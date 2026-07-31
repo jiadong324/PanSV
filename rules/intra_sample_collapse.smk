@@ -10,24 +10,25 @@ global SAMPLES
 global HEADERS_DICT
 global REF_DICT
 global CPR_DICT
+global REFV
 global MERGE_CALLERS
 
 def find_header(wildcards):
-    return HEADERS_DICT[wildcards.refv]
+    return HEADERS_DICT[REFV]
 
 def find_ref(wildcards):
-    return REF_DICT[wildcards.refv]
+    return REF_DICT[REFV]
 def find_cprmask(wildcards):
-    return CPR_DICT[wildcards.refv]
+    return CPR_DICT[REFV]
 
 
 rule bcftool_all:
     input:
-        vcf="{refv}/{sample}/vcf_list.txt"
+        vcf="results/{sample}/vcf_list.txt"
     output:
-        outvcf="{refv}/{sample}/caller_merge/insdel.tmp.vcf.gz"
+        outvcf="results/{sample}/caller_merge/insdel.tmp.vcf.gz"
     log:
-        "log/{refv}/{sample}.bcftool.log",
+        "log/results/{sample}.bcftool.log",
     resources:
         mem=10,
         hrs=24,
@@ -49,10 +50,10 @@ rule truvari:
     input:
         bcfvcf=rules.bcftool_all.output.outvcf
     output:
-        removed="{refv}/{sample}/caller_merge/removed.vcf.gz",
-        collapse="{refv}/{sample}/caller_merge/truvari_collapsed.insdel.vcf.gz"
+        removed="results/{sample}/caller_merge/removed.vcf.gz",
+        collapse="results/{sample}/caller_merge/truvari_collapsed.insdel.vcf.gz"
     log:
-        "log/{refv}/{sample}.truvari.log",
+        "log/results/{sample}.truvari.log",
     resources:
         mem=10,
         hrs=24,
@@ -62,7 +63,7 @@ rule truvari:
         "modules-init",
         "modules-gs/prod",
         "modules-eichler/prod",
-        "truvari/4.3.1"
+        "truvari/5.2.0"
     shell:
         """
         truvari collapse -i {input.bcfvcf} -c {output.removed} --sizemin 50 --sizemax 100000 --gt het -k first --intra --pctseq 0.90 --pctsize 0.90 --refdist 500 | bcftools sort --max-mem 8G -O z -o {output.collapse}
@@ -80,14 +81,14 @@ rule parse_truvari_collapse:
         read_callers=config.get("READ_CALLERS"),
         sample=config.get('SAMPLE'),
     output:
-        svs_bed="{refv}/{sample}/caller_merge/truvari_collapsed.insdel.bed.gz",
-        filt_vcf="{refv}/{sample}/caller_merge/truvari_collapsed.insdel.filt.vcf",
-        filt_bed="{refv}/{sample}/caller_merge/truvari_collapsed.insdel.filt.bed.gz",
-        pav_supp_vcf="{refv}/{sample}/caller_merge/truvari_collapsed.insdel.pav-supp.vcf",
-        pav_supp_bed="{refv}/{sample}/caller_merge/truvari_collapsed.insdel.pav-supp.bed.gz",
-        pav_bed="{refv}/{sample}/caller_merge/truvari_collapsed.insdel.pav-only.bed.gz",
-        pav_supp_fa="{refv}/{sample}/caller_merge/truvari_collapsed.insdel.pav-supp.fa",
-        pav_fa="{refv}/{sample}/caller_merge/truvari_collapsed.insdel.pav-only.fa",
+        svs_bed="results/{sample}/caller_merge/truvari_collapsed.insdel.bed.gz",
+        filt_vcf="results/{sample}/caller_merge/truvari_collapsed.insdel.filt.vcf",
+        filt_bed="results/{sample}/caller_merge/truvari_collapsed.insdel.filt.bed.gz",
+        pav_supp_vcf="results/{sample}/caller_merge/truvari_collapsed.insdel.pav-supp.vcf",
+        pav_supp_bed="results/{sample}/caller_merge/truvari_collapsed.insdel.pav-supp.bed.gz",
+        pav_bed="results/{sample}/caller_merge/truvari_collapsed.insdel.pav-only.bed.gz",
+        pav_supp_fa="results/{sample}/caller_merge/truvari_collapsed.insdel.pav-supp.fa",
+        pav_fa="results/{sample}/caller_merge/truvari_collapsed.insdel.pav-only.fa",
     resources:
         mem=10,
         hrs=24,
@@ -247,21 +248,21 @@ rule parse_truvari_collapse:
                                            'MERGE_SAMPLES']).to_csv(output.pav_bed,sep='\t',header=True,index=False,compression='gzip')
 
         ## Save SV counts by number of supporting callers
-        with open(f'{wildcards.refv}/{wildcards.sample}/caller_merge/truvari_collapsed.insdel.stats.json','w') as f:
+        with open(f'results/{wildcards.sample}/caller_merge/truvari_collapsed.insdel.stats.json','w') as f:
             json.dump(insdel_dict,f)
 
         ## Save SVs detected by different combination of callers
-        with open(f'{wildcards.refv}/{wildcards.sample}/caller_merge/truvari_collapsed.insdel.stats.json','w') as f:
+        with open(f'results/{wildcards.sample}/caller_merge/truvari_collapsed.insdel.stats.json','w') as f:
             json.dump(caller_dict,f)
 
 
 rule index_filt_vcf:
     input:
-        filt_vcf="{refv}/{sample}/caller_merge/truvari_collapsed.insdel.filt.vcf",
-        pav_supp_vcf="{refv}/{sample}/caller_merge/truvari_collapsed.insdel.pav-supp.vcf"
+        filt_vcf="results/{sample}/caller_merge/truvari_collapsed.insdel.filt.vcf",
+        pav_supp_vcf="results/{sample}/caller_merge/truvari_collapsed.insdel.pav-supp.vcf"
     output:
-        gzip="{refv}/{sample}/caller_merge/truvari_collapsed.insdel.filt.vcf.gz",
-        gzip_pav="{refv}/{sample}/caller_merge/truvari_collapsed.insdel.pav-supp.vcf.gz",
+        gzip="results/{sample}/caller_merge/truvari_collapsed.insdel.filt.vcf.gz",
+        gzip_pav="results/{sample}/caller_merge/truvari_collapsed.insdel.pav-supp.vcf.gz",
     resources:
         mem=10,
         hrs=24,
@@ -285,4 +286,4 @@ rule index_filt_vcf:
 
 rule intra_sample_collapse:
     input:
-        expand(rules.index_filt_vcf.output.gzip, sample=SAMPLES.index, ref=REF_DICT.keys())
+        expand(rules.index_filt_vcf.output.gzip, sample=SAMPLES.index)
