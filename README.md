@@ -24,27 +24,40 @@ Minimap2 v2.28 is used to align assembly to both references. The alignment pipel
 
 ### SV callers
 
-The current pipeline supports the following callers. 
 To detect SVs for each genome, simply run ```./rundist detect 50``` or a dry-run with ```./rundist detect 50 -np```
 
-This will create ```{sample}.{caller}.insdel.vcf``` and a summary table of SV detected by different caller for each sample ```{sample}.caller_summary.txt```
+This will create ```{sample}.{caller}.insdel.vcf``` and a summary table of SVs detected by different caller for each sample ```{sample}.caller_summary.txt```.
+
 The ```{sample}.{caller}.insdel.vcf``` will be used to create a high-quality per genome SV callset.
 
-| Tool        | Input type | Version |
-|-------------|------------|---------|
-| PAV         | Assembly   | v2.3.4  | 
-| Dipcall     | Assembly   | v0.3    | 
-| SVIM-ASM    | Assembly   | v0.9    |
-| pbsv        | HiFi       | v2.9.0  |
-| sawfish     | HiFi       | v0.12.4 |
-| sniffles    | HiFi, ONT  | v2.2    |
-| delly       | HiFi, ONT  | v1.2.6  |
-| cutesv      | HiFi, ONT  | v2.1.0  |
-| Nanovar     | ONT        | v1.8.0  |
-| debreak     | HiFi, ONT  | v1.2.0  |
-| SVision     | HiFi, ONT  | v1.4    |
-| SVision-pro | HiFi, ONT  | v2.3    |
-| LongcallD   | HiFi       | v0.0.11 |
+The current pipeline supports the following callers. 
+
+| Tool        | Input type | Version | Website                                       |
+|-------------|------------|---------|-----------------------------------------------|
+| PAV         | Assembly   | v2.3.4  | https://github.com/EichlerLab/pav             |
+| Dipcall     | Assembly   | v0.3    | https://github.com/lh3/dipcall                |
+| SVIM-ASM    | Assembly   | v0.9    | https://github.com/eldariont/svim-asm         |
+| pbsv        | HiFi       | v2.9.0  | https://github.com/PacificBiosciences/pbsv    |
+| sawfish     | HiFi       | v0.12.4 | https://github.com/PacificBiosciences/sawfish |
+| sniffles    | HiFi, ONT  | v2.2    | https://github.com/fritzsedlazeck/sniffles    |
+| delly       | HiFi, ONT  | v1.2.6  | https://github.com/dellytools/delly           |
+| cutesv      | HiFi, ONT  | v2.1.0  | https://github.com/tjiangHIT/cuteSV           |
+| Nanovar     | ONT        | v1.8.0  | https://github.com/benoukraflab/NanoVar       |
+| debreak     | HiFi, ONT  | v1.2.0  | https://github.com/Maggi-Chen/DeBreak         |
+| SVision     | HiFi, ONT  | v1.4    | https://github.com/xjtu-omics/SVision         |
+| SVision-pro | HiFi, ONT  | v2.3    | https://github.com/songbowang125/SVision-pro  |
+| LongcallD   | HiFi       | v0.0.11 | https://github.com/yangao07/longcallD         |
+
+### TR genotyping
+
+Tandem repeat catalogs for GRCh38 and T2T-CHM13 can be found [here](https://zenodo.org/records/13178746).
+
+
+| Tool   | Input type | Version | Dataset             | Purpose        |
+|--------|------------|---------|---------------------|----------------|
+| TRGT   | HiFi       | v1.4.1  | HPRC, HGSVC, UW-ONT | Tandem repeats |
+| vamos  | Assembly   | v2.1.5  | HPRC, HGSVC, UW-ONT | Tandem repeats |
+
 
 ### Per genome SV
 
@@ -56,15 +69,6 @@ We also used the same annotation as [Logsdon et al. Nature 2025](https://www.nat
 Briefly, these regions include UCSC gaps and centromere on GRCh38. 
 For T2T-CHM13, complex regions include centromere, acrocentric p-arms, satellite regions except for monomeric satellite.
 
-### TR genotyping
-
-Tandem repeat catalogs for GRCh38 and T2T-CHM13 can be found [here](https://zenodo.org/records/13178746).
-
-
-| Tool   | Input type | Version | Dataset             | Purpose        |
-|--------|------------|---------|---------------------|----------------|
-| TRGT   | HiFi       | v1.4.1  | HPRC, HGSVC, UW-ONT | Tandem repeats |
-| vamos  | Assembly   | v2.1.5  | HPRC, HGSVC, UW-ONT | Tandem repeats |
 
 
 ### Cohort-level integration
