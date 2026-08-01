@@ -53,6 +53,8 @@ rule sawfish_call:
         source /etc/profile.d/modules.sh
         module load modules modules-init modules-gs/prod modules-eichler/prod sawfish/0.12.4
         sawfish joint-call --threads {threads} --sample $( dirname {input.bcf} ) --clobber --output-dir $( dirname {output.vcf} )
+        mv results/{wildcards.sample}/genotyped.sv.vcf.gz {output.vcf}
+        tabix -p vcf {output.vcf}
         """
 
 
@@ -201,6 +203,8 @@ rule longcallD:
         source /etc/profile.d/modules.sh
         module load modules modules-init modules-gs/prod modules-eichler/prod longcallD/0.0.11
         longcallD call --hifi --min-sv-len 50 -n {wildcards.sample} -t {threads} -o results/{wildcards.sample}/{wildcards.sample}.longcallD.vcf {params.ref} {input.bam}       
+        bcftools sort -Oz -o {output.vcf} results/{wildcards.sample}/{wildcards.sample}.longcallD.vcf
+        tabix -p vcf {output.vcf}
         """
 
 rule debreak:
