@@ -4,23 +4,18 @@ global SAMPLES
 global REF_DICT
 global REFV
 global MERGE_CALLERS
+global DETECT_CALLERS
 
 def find_ref(wildcards):
     return REF_DICT[REFV]
 
 rule norm_caller_vcf:
     input:
-        vcf="results/{sample}/{sample}.{caller}.vcf",
+        vcf="results/{sample}/{sample}.{caller}.vcf.gz",
     output:
         insdel="results/{sample}/{sample}.{caller}.insdel.vcf.gz",
     params:
         ref = find_ref
-    envmodules:
-        "modules",
-        "modules-init",
-        "modules-gs/prod",
-        "modules-eichler/prod",
-        "truvari/4.2.1",
     resources:
         mem=10,
         hrs=24,
@@ -28,10 +23,18 @@ rule norm_caller_vcf:
     threads: 1
     shell:
         """
-        bcftools norm --multiallelics - --output-type v {input.vcf} | python scripts/resolve.py /dev/stdin {wildcards.caller} {input.ref} |  bcftools norm --check-ref s --fasta-ref {input.ref} -N -m-any | bcftools annotate -x 'INFO/AF,INFO/STRAND' > results/{wildcards.sample}/{wildcards.caller}.tmp.vcf
-        bcftools view -i "(SVTYPE=='INS'||SVTYPE=='DEL')&FILTER=='PASS'" -O v results/{wildcards.sample}/{wildcards.caller}.tmp.vcf | bcftools sort -o /dev/stdout -O v - | bgzip -c > {output.insdel}           
-        tabix -p vcf {output.insdel}
-        rm results/{wildcards.sample}/{wildcards.caller}.tmp.vcf
+        source /etc/profile.d/modules.sh
+        module load modules modules-init modules-gs/prod modules-eichler/prod truvari/4.3.1
+        if [ {wildcards.caller} == longcallD ]
+        then
+            bcftools norm --multiallelics - --output-type v {input.vcf}| bcftools view -i "(SVTYPE=='INS'||SVTYPE=='DEL')&FILTER=='PASS'" -O v - | bcftools sort -o /dev/stdout -O v - | bgzip -c > {output.insdel}
+            tabix -p vcf {output.insdel}
+        else
+            bcftools norm --multiallelics - --output-type v {input.vcf} | python {PIPELINE_DIR}/scripts/resolve.py /dev/stdin {wildcards.caller} {params.ref} |  bcftools norm --check-ref s --fasta-ref {params.ref} -N -m-any | bcftools annotate -x 'INFO/AF,INFO/STRAND' > results/{wildcards.sample}/{wildcards.caller}.tmp.vcf
+            bcftools view -i "(SVTYPE=='INS'||SVTYPE=='DEL')&FILTER=='PASS'" -O v results/{wildcards.sample}/{wildcards.caller}.tmp.vcf | bcftools sort -o /dev/stdout -O v - | bgzip -c > {output.insdel}           
+            tabix -p vcf {output.insdel}
+            rm results/{wildcards.sample}/{wildcards.caller}.tmp.vcf
+        fi
         """
 
 rule parse_hapdiff:
@@ -55,7 +58,7 @@ rule parse_hapdiff:
     threads: 1
     shell:
         """
-        bcftools norm --multiallelics - --output-type v {input.vcf} | python /net/eichler/vol28/projects/medical_reference/nobackups/Scripts/MedRef/parsers/resolve.py /dev/stdin svimasm | bcftools norm --check-ref s --fasta-ref {input.ref} -N -m-any > results/{wildcards.sample}/hapdiff.tmp.vcf
+        bcftools norm --multiallelics - --output-type v {input.vcf} | python {PIPELINE_DIR}/scripts/resolve.py /dev/stdin svimasm | bcftools norm --check-ref s --fasta-ref {input.ref} -N -m-any > results/{wildcards.sample}/hapdiff.tmp.vcf
         bcftools view -i "SVTYPE=='INS'||SVTYPE=='DEL'" -O v results/{wildcards.sample}/hapdiff.tmp.vcf | bcftools sort -o /dev/stdout -O v - | bgzip -c > {output.insdel}
         tabix -p vcf {output.insdel}
         rm results/{wildcards.sample}/hapdiff.tmp.vcf
@@ -82,7 +85,7 @@ rule parse_pav:
     threads: 1
     shell:
         """
-        python ../scripts/Pav2SV.py {input.vcf} {wildcards.sample} | bcftools norm --multiallelics - --output-type v /dev/stdin | python ../scripts/resolve.py /dev/stdin pav {input.ref} |  bcftools norm --check-ref s --fasta-ref {input.ref} -N -m-any > results/{wildcards.sample}/pav.tmp.vcf
+        python {PIPELINE_DIR}/scripts/Pav2SV.py {input.vcf} {wildcards.sample} | bcftools norm --multiallelics - --output-type v /dev/stdin | python {PIPELINE_DIR}/scripts/resolve.py /dev/stdin pav {input.ref} |  bcftools norm --check-ref s --fasta-ref {input.ref} -N -m-any > results/{wildcards.sample}/pav.tmp.vcf
         bcftools view -i "SVTYPE=='INS'||SVTYPE=='DEL'" -O v results/{wildcards.sample}/pav.tmp.vcf | bcftools sort -o /dev/stdout -O v - | bgzip -c > {output.insdel}
         bcftools view -i "SVTYPE=='INV'" -O v results/{wildcards.sample}/pav.tmp.vcf | bcftools sort -o /dev/stdout -O v - | bgzip -c > {output.insdel}
         tabix -p vcf {output.insdel}
@@ -114,23 +117,8 @@ rule parse_dipcall:
         """
 
 
-rule caller_vcf_list:
-    input:
-        caller_vcf=expand("results/{sample}/{sample}.{caller}.insdel.vcf.gz", sample=SAMPLES.index, caller=MERGE_CALLERS.split(','))
-    output:
-        vcf_list = 'results/{sample}/vcf_list.txt'
-    resources:
-        mem=10,
-        hrs=24,
-        disk_free=1,
-    run:
-        fout = open(output.vcf_list, 'w')
-        for line in input.caller_vcf:
-            print(line, file=fout)
-
-
 rule parse_caller:
     input:
-        expand("results/{sample}/vcf_list.txt", sample=SAMPLES.index)
+        expand("results/{sample}/{sample}.{caller}.insdel.vcf.gz", sample=SAMPLES.index, caller=DETECT_CALLERS.split(',')),
     message:
         "Caller normalization complete"

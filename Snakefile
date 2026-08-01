@@ -42,23 +42,47 @@ def get_caller_detect(wildcards):
 
     return vcf_list
 
+def get_caller_norm(wildcards):
+    vcf_list = []
+    sample = wildcards.sample
+
+    for caller in DETECT_CALLERS.split(','):
+        vcf_list.append(f'results/{sample}/{sample}.{caller}.insdel.vcf.gz')
+
+    return vcf_list
+
 include: "rules/caller_detect.smk"
-# include: "rules/parse_caller.smk"
+include: "rules/parse_caller.smk"
 # include: "rules/intra_sample_collapse.smk"
 # include: "rules/intra_sample_stats.smk"
 
 rule detect:
     input:
-        expand('results/{sample}/caller_detect.done', sample=SAMPLES.index)
+        # expand('results/{sample}/caller_norm.done', sample=SAMPLES.index)
+        expand('results/{sample}/caller_vcf_list.txt', sample=SAMPLES.index)
     message:
-        "Caller detection complete for all samples"
+        "Caller detection and normalization complete for all samples"
 
-rule sample_detect:
+rule run_caller:
     input:
         get_caller_detect
     output:
         flag = touch('results/{sample}/caller_detect.done')
 
+rule norm_caller:
+    input:
+        insdel = get_caller_norm
+    output:
+        caller_list='results/{sample}/caller_vcf_list.txt'
+    resources:
+        mem=10,
+        hrs=24,
+        disk_free=1,
+    run:
+        fout = open(output.caller_list,'w')
+        for a_vcf in input.insdel:
+            print(a_vcf,file=fout)
+        fout.close()
 
 
 
