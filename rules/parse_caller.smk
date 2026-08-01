@@ -45,12 +45,6 @@ rule parse_hapdiff:
         # inv="{ref}/{sample}/{sample}.hapdiff.inv.vcf.gz",
     params:
         ref=find_ref
-    envmodules:
-        "modules",
-        "modules-init",
-        "modules-gs/prod",
-        "modules-eichler/prod",
-        "truvari/4.2.1",
     resources:
         mem=10,
         hrs=24,
@@ -58,6 +52,9 @@ rule parse_hapdiff:
     threads: 1
     shell:
         """
+        source /etc/profile.d/modules.sh
+        module load modules modules-init modules-gs/prod modules-eichler/prod truvari/4.3.1
+        
         bcftools norm --multiallelics - --output-type v {input.vcf} | python {PIPELINE_DIR}/scripts/resolve.py /dev/stdin svimasm | bcftools norm --check-ref s --fasta-ref {input.ref} -N -m-any > results/{wildcards.sample}/hapdiff.tmp.vcf
         bcftools view -i "SVTYPE=='INS'||SVTYPE=='DEL'" -O v results/{wildcards.sample}/hapdiff.tmp.vcf | bcftools sort -o /dev/stdout -O v - | bgzip -c > {output.insdel}
         tabix -p vcf {output.insdel}
@@ -72,12 +69,6 @@ rule parse_pav:
         inv="results/{sample}/{sample}.pav.inv.vcf.gz",
     params:
         ref=find_ref
-    envmodules:
-        "modules",
-        "modules-init",
-        "modules-gs/prod",
-        "modules-eichler/prod",
-        "miniconda/4.12.0",
     resources:
         mem=10,
         hrs=24,
@@ -85,7 +76,10 @@ rule parse_pav:
     threads: 1
     shell:
         """
-        python {PIPELINE_DIR}/scripts/Pav2SV.py {input.vcf} {wildcards.sample} | bcftools norm --multiallelics - --output-type v /dev/stdin | python {PIPELINE_DIR}/scripts/resolve.py /dev/stdin pav {input.ref} |  bcftools norm --check-ref s --fasta-ref {input.ref} -N -m-any > results/{wildcards.sample}/pav.tmp.vcf
+        source /etc/profile.d/modules.sh
+        module load modules modules-init modules-gs/prod modules-eichler/prod miniconda/4.12.0
+        
+        python {PIPELINE_DIR}/scripts/Pav2SV.py {input.vcf} {wildcards.sample} | bcftools norm --multiallelics - --output-type v /dev/stdin | python {PIPELINE_DIR}/scripts/resolve.py /dev/stdin pav {params.ref} |  bcftools norm --check-ref s --fasta-ref {params.ref} -N -m-any > results/{wildcards.sample}/pav.tmp.vcf
         bcftools view -i "SVTYPE=='INS'||SVTYPE=='DEL'" -O v results/{wildcards.sample}/pav.tmp.vcf | bcftools sort -o /dev/stdout -O v - | bgzip -c > {output.insdel}
         bcftools view -i "SVTYPE=='INV'" -O v results/{wildcards.sample}/pav.tmp.vcf | bcftools sort -o /dev/stdout -O v - | bgzip -c > {output.insdel}
         tabix -p vcf {output.insdel}
@@ -100,18 +94,15 @@ rule parse_dipcall:
         vcf='results/{sample}/{sample}.dip.insdel.vcf.gz'
     params:
         ref=find_ref
-    envmodules:
-        "modules",
-        "modules-init",
-        "modules-gs/prod",
-        "modules-eichler/prod",
-        "dipcall/0.3",
     resources:
         mem=10,
         hrs=24,
         disk_free=1,
     shell:
         """
+        source /etc/profile.d/modules.sh
+        module load modules modules-init modules-gs/prod modules-eichler/prod miniconda/4.12.0
+        
         bcftools norm --multiallelics - --output-type v {input.vcf} | python /net/eichler/vol28/projects/medical_reference/nobackups/Scripts/MedRef/parsers/Dipcall2SV.py /dev/stdin {input.ref} | bcftools sort -o /dev/stdout -O z - > {output.vcf}
         tabix -p vcf {output.vcf}
         """
@@ -119,6 +110,6 @@ rule parse_dipcall:
 
 rule parse_caller:
     input:
-        expand("results/{sample}/{sample}.{caller}.insdel.vcf.gz", sample=SAMPLES.index, caller=DETECT_CALLERS.split(',')),
+        expand("results/{sample}/{sample}.{caller}.insdel.vcf.gz", sample=SAMPLES.index, caller=MERGE_CALLERS.split(',')),
     message:
         "Caller normalization complete"

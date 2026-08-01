@@ -1,5 +1,6 @@
 import os
 import sys
+import gzip
 
 import pandas as pd
 
@@ -59,7 +60,9 @@ include: "rules/parse_caller.smk"
 rule detect:
     input:
         # expand('results/{sample}/caller_norm.done', sample=SAMPLES.index)
-        expand('results/{sample}/caller_vcf_list.txt', sample=SAMPLES.index)
+        expand('results/{sample}/caller_vcf_list.txt', sample=SAMPLES.index),
+        expand('results/{sample}/{sample}.caller_summary.txt', sample=SAMPLES.index)
+
     message:
         "Caller detection and normalization complete for all samples"
 
@@ -73,7 +76,8 @@ rule norm_caller:
     input:
         insdel = get_caller_norm
     output:
-        caller_list='results/{sample}/caller_vcf_list.txt'
+        caller_list='results/{sample}/caller_vcf_list.txt',
+        summary='results/{sample}/{sample}.caller_summary.txt'
     resources:
         mem=10,
         hrs=24,
@@ -84,11 +88,27 @@ rule norm_caller:
             print(a_vcf,file=fout)
         fout.close()
 
+        with open(output.summary,'w') as fout:
+            print('caller\tINS\tDEL\tTOTAL',file=fout)
+            for caller, vcf in zip(DETECT_CALLERS.split(','),input.insdel):
+                ins = 0
+                dele = 0
+                with gzip.open(vcf,'rt') as fin:
+                    for line in fin:
+                        if line.startswith('#'):
+                            continue
+                        info = line.rstrip('\n').split('\t')[7]
+                        info_fields = dict(kv.split('=',1) for kv in info.split(';') if '=' in kv)
+                        svtype = info_fields.get('SVTYPE')
+                        if svtype == 'INS':
+                            ins += 1
+                        elif svtype == 'DEL':
+                            dele += 1
+                total = ins + dele
+                print(f'{caller}\t{ins}\t{dele}\t{total}',file=fout)
 
 
-# rule normalize:
-#         norm_vcf=rules.parse_caller.input,
-#
+
 # rule intra:
 #     input:
 #         persample=rules.intra_sample_collapse.input,

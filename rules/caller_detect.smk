@@ -55,6 +55,7 @@ rule sawfish_call:
         sawfish joint-call --threads {threads} --sample $( dirname {input.bcf} ) --clobber --output-dir $( dirname {output.vcf} )
         mv results/{wildcards.sample}/genotyped.sv.vcf.gz {output.vcf}
         tabix -p vcf {output.vcf}
+        rm results/{wildcards.sample}/genotyped.sv.vcf.gz results/{wildcards.sample}/genotyped.sv.vcf.gz.tbi
         """
 
 
@@ -79,6 +80,7 @@ rule sniffles:
          sniffles -i {input.bam} --reference {params.ref} --output-rnames -v results/{wildcards.sample}/{wildcards.sample}.sniffles.vcf -t {threads}
          bcftools sort -Oz -o {output.vcf} results/{wildcards.sample}/{wildcards.sample}.sniffles.vcf
          tabix -p vcf {output.vcf}
+         rm results/{wildcards.sample}/{wildcards.sample}.sniffles.vcf
          """
 
 rule delly:
@@ -139,6 +141,8 @@ rule cuteSV:
         module load modules modules-init modules-gs/prod modules-eichler/prod cuteSV/2.1.0
         cuteSV -t {threads} --write_old_sigs --genotype -l 50 --max_cluster_bias_INS 1000 --diff_ratio_merging_INS 0.9 --max_cluster_bias_DEL 1000 --diff_ratio_merging_DEL 0.5 {input.bam} {params.ref} results/{wildcards.sample}/{wildcards.sample}.cutesv.vcf results/{wildcards.sample}
         bcftools sort -Oz -o {output.vcf} results/{wildcards.sample}/{wildcards.sample}.cutesv.vcf
+        tabix -p vcf {output.vcf}
+        rm results/{wildcards.sample}/{wildcards.sample}.cutesv.vcf
         """
 
 
@@ -182,9 +186,9 @@ rule pbsv_call:
         source /etc/profile.d/modules.sh
         module load modules modules-init modules-gs/prod modules-eichler/prod pbconda/202403
         pbsv call --hifi -m 50 -j {threads} {params.ref} {input.sig} results/{wildcards.sample}/{wildcards.sample}.pbsv.vcf
-        rm {input.sig}
         bcftools sort -Oz -o {output.vcf} results/{wildcards.sample}/{wildcards.sample}.pbsv.vcf
         tabix -p vcf {output.vcf}
+        rm results/{wildcards.sample}/{wildcards.sample}.pbsv.vcf {input.sig}
         """
 
 rule longcallD:
@@ -205,6 +209,7 @@ rule longcallD:
         longcallD call --hifi --min-sv-len 50 -n {wildcards.sample} -t {threads} -o results/{wildcards.sample}/{wildcards.sample}.longcallD.vcf {params.ref} {input.bam}       
         bcftools sort -Oz -o {output.vcf} results/{wildcards.sample}/{wildcards.sample}.longcallD.vcf
         tabix -p vcf {output.vcf}
+        rm results/{wildcards.sample}/{wildcards.sample}.longcallD.vcf
         """
 
 rule debreak:
@@ -225,6 +230,7 @@ rule debreak:
         debreak --bam {input.bam} --outpath $( dirname {output.vcf} ) --rescue_large_ins --poa --ref {params.ref}
         bcftools sort -Oz -o {output.vcf} results/{wildcards.sample}/debreak.vcf
         tabix -p vcf {output.vcf}
+        rm results/{wildcards.sample}/debreak.vcf
         """
 
 rule svision:

@@ -1,9 +1,17 @@
 # PanSV
 
-The workflow used for detecting SVs from 1KG long-read genomes.
-Check [1KG_LongRead_SV](https://github.com/jiadong324/1KG_LongRead_SV) for the release of SVs from these genomes. 
+The workflow used for detecting SVs from long-read genomes in population-scale and clinical.
+It runs multiple different assembly- and read-based callers with a per sample level SV quality assessment.
+
+Check [1KG_LongRead_SV](https://github.com/jiadong324/1KG_LongRead_SV) for the release of SVs detected by this pipeline from 1KG long-read genomes. 
 
 ## SV discovery
+
+### Setup
+
+1. Link file ```rundist``` to your working directory.
+2. Modify the ```./config/config.yaml``` example file as needed and copy to your working directory.
+3. Create the a manifest file of alignment file. The header should be ```NAME\tCHM13\tGRCh38```. Each caller will look for BAM files based on the ```REFV``` in ```config.yaml``` and it has to match the manifest header.
 
 ### Alignment
 HiFi reads are aligned with [pbmm2](https://github.com/PacificBiosciences/pbmm2) v1.13.1 ‘--preset HiFi’. 
@@ -12,22 +20,31 @@ We used IB-ONT alignment directly from the publication for SV discovery and phas
 
 Minimap2 v2.28 is used to align assembly to both references. The alignment pipeline is [here](https://github.com/mrvollger/asm-to-reference-alignment).
 
+**NOTE:** This pipeline currently dose not support alignment.
+
 ### SV callers
+
+The current pipeline supports the following callers. 
+To detect SVs for each genome, simply run ```./rundist detect 50``` or a dry-run with ```./rundist detect 50 -np```
+
+This will create ```{sample}.{caller}.insdel.vcf``` and a summary table of SV detected by different caller for each sample ```{sample}.caller_summary.txt```
+The ```{sample}.{caller}.insdel.vcf``` will be used to create a high-quality per genome SV callset.
 
 | Tool        | Input type | Version |
 |-------------|------------|---------|
 | PAV         | Assembly   | v2.3.4  | 
 | Dipcall     | Assembly   | v0.3    | 
-| hapdiff     | Assembly   | v0.9    |
+| SVIM-ASM    | Assembly   | v0.9    |
 | pbsv        | HiFi       | v2.9.0  |
 | sawfish     | HiFi       | v0.12.4 |
 | sniffles    | HiFi, ONT  | v2.2    |
 | delly       | HiFi, ONT  | v1.2.6  |
 | cutesv      | HiFi, ONT  | v2.1.0  |
 | Nanovar     | ONT        | v1.8.0  |
-| debreak     | ONT        | v1.2.0  |
+| debreak     | HiFi, ONT  | v1.2.0  |
 | SVision     | HiFi, ONT  | v1.4    |
 | SVision-pro | HiFi, ONT  | v2.3    |
+| LongcallD   | HiFi       | v0.0.11 |
 
 ### Per genome SV
 
