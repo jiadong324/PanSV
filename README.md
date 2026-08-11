@@ -75,6 +75,8 @@ For T2T-CHM13, complex regions include centromere, acrocentric p-arms, satellite
 
 ## Cohort-level reference panel
 
+**NOTE:** For the current SV reference panel created from HPRC/HGSVC phased assemblies, we did not do additional phasing of SVs and SNPs because they are called from same haplotype input.
+
 ### Callable regions
 We first defined the callable regions for each genome. HGSVC/HPRC and 1KG-ONT callable regions were created by PAV based on the assembly to reference alignment. 
 For IB-ONT genomes, we splitted the PMDV phased BAM into two read sets. The callable regions for each haplotype were created by merging each read set (>= 3 reads) into non–overlapping intervals with BEDtools merge ‘-d 500’. 
