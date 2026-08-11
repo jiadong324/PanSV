@@ -42,7 +42,7 @@ snakemake -s ${SOURCE_DIR}/Snakefile \
         -w 30 "$@" \
         --use-singularity  \
         --singularity-args "--bind /net:/net"  \
-        --restart-times 3 \
+        --restart-times 1 \
         --printshellcmds \
         --keep-going \
         --ri

@@ -75,7 +75,7 @@ def resolve(entry, ref):
 if __name__ == '__main__':
     default_quals = {"pbsv": 6,
                      "sniffles": 5,
-                     "pav": 7, 'svimasm': 3, 'cutesv': 4, 'delly': 2, 'dip': 8}
+                     "pav": 10, 'svimasm': 3, 'cutesv': 4, 'delly': 2, 'dipcall': 2, 'sawfish': 2}
 
     VALIDCHROMS = ["chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12",
                    "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX",

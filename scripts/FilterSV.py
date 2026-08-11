@@ -190,17 +190,14 @@ if __name__ == '__main__':
         info_dict['VARID'] = f'{new_sv_id}-{sample}-{bin_supp}'
         info_labels = ['VARID', 'SVLEN', 'END', 'SVTYPE', 'SUPP_CALLER']
 
-        if is_pav_sv:
-            info_labels.append("QRY_REGION" if "QRY_REGION" in info_dict else "TIG_REGION")
-
         info_list = []
 
         for key in info_labels:
-            if key in ['QRY_REGION', 'TIG_REGION']:
-                # print(info_dict)
-                info_list.append('TIG_REGION={1}'.format(key, info_dict[key]))
-                continue
             info_list.append('{0}={1}'.format(key, info_dict[key]))
+
+        if is_pav_sv:
+            key = "QRY_REGION" if "QRY_REGION" in info_dict else "TIG_REGION"
+            info_list.append('TIG_REGION={0}'.format(info_dict[key]))
 
         new_info_str = ';'.join(info_list)
         in_excl = '.'

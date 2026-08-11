@@ -59,7 +59,7 @@ rule truvari:
         """
         source /etc/profile.d/modules.sh
         module load modules modules-init modules-gs/prod modules-eichler/prod truvari/5.2.0
-        truvari collapse -i {input.bcfvcf} -c {output.removed} --sizemin 50 --sizemax 100000 --gt het -k first --intra {CROSS_CALLER_PARAMS} | bcftools sort --max-mem 8G -O z -o {output.collapse}
+        truvari collapse -i {input.bcfvcf} -c {output.removed} --sizemin 50 --sizemax 100000 --gt het -k maxqual --intra {CROSS_CALLER_PARAMS} | bcftools sort --max-mem 8G -O z -o {output.collapse}
         tabix -p vcf {output.collapse}
         """
 
