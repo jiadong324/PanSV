@@ -8,13 +8,14 @@ global REF_DICT
 def find_ref(wildcards):
     return REF_DICT[REFV]
 
-def get_h1(wildcards):
-    # manifest_df = pd.read_csv(MANIFEST[wildcards.ref],sep='\t',index_col=['NAME'])
-    return SAMPLES.at[wildcards.sample, 'HAP1']
+# def get_h1(wildcards):
+#     # manifest_df = pd.read_csv(MANIFEST[wildcards.ref],sep='\t',index_col=['NAME'])
+#     return SAMPLES.at[wildcards.sample, 'HAP1']
 
-def get_h2(wildcards):
-    # manifest_df = pd.read_csv(MANIFEST[wildcards.ref],sep='\t',index_col=['NAME'])
-    return SAMPLES.at[wildcards.sample, 'HAP2']
+# def get_h2(wildcards):
+#     # manifest_df = pd.read_csv(MANIFEST[wildcards.ref],sep='\t',index_col=['NAME'])
+#     return SAMPLES.at[wildcards.sample, 'HAP2']
+
 def find_bam(wildcards):
     return SAMPLES.at[wildcards.sample, REFV]
 
@@ -277,29 +278,29 @@ rule svisionpro:
         mv result/{wildcards.sample}/{wildcards.sample}.svision_pro_*.vcf {output.vcf}
         """
 
-rule hapdiff:
-    input:
-        h1 = get_h1,
-        h2 = get_h2,
-    output:
-        vcf="results/{sample}/hapdiff_phased.vcf.gz",
-    params:
-        ref = find_ref
-    resources:
-        mem=20,
-        hrs=24,
-        disk_free=1,
-    threads: 6
-    shell:
-        """
-        source /etc/profile.d/modules.sh
-        module load modules modules-init modules-gs/prod modules-eichler/prod miniconda/4.12.0 hapdiff/0.9
-        hapdiff.py --reference {params.ref} --pat {input.h1} --mat {input.h2} --out-dir $( dirname {output.vcf} ) -t {threads} --sample {wildcards.sample} --sv-size 50
-        """
+# rule hapdiff:
+#     input:
+#         h1 = get_h1,
+#         h2 = get_h2,
+#     output:
+#         vcf="results/{sample}/hapdiff_phased.vcf.gz",
+#     params:
+#         ref = find_ref
+#     resources:
+#         mem=20,
+#         hrs=24,
+#         disk_free=1,
+#     threads: 6
+#     shell:
+#         """
+#         source /etc/profile.d/modules.sh
+#         module load modules modules-init modules-gs/prod modules-eichler/prod miniconda/4.12.0 hapdiff/0.9
+#         hapdiff.py --reference {params.ref} --pat {input.h1} --mat {input.h2} --out-dir $( dirname {output.vcf} ) -t {threads} --sample {wildcards.sample} --sv-size 50
+#         """
 
 rule caller_detect:
     input:
         expand("results/{sample}/{sample}.{var_caller}.vcf.gz", sample=SAMPLES.index, var_caller=DETECT_CALLERS.split(',')),
-        expand("results/{sample}/hapdiff_phased.vcf.gz", sample=SAMPLES.index)
-    message:
-        "Caller detection complete"
+        # expand("results/{sample}/hapdiff_phased.vcf.gz", sample=SAMPLES.index)
+    output:
+        flag= touch('results/{sample}/caller_detect.done')

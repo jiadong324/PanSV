@@ -2,6 +2,7 @@ MANIFEST: manifest.tab
 DETECT_CALLERS: pbsv,sawfish,sniffles,delly,cutesv,longcallD
 MERGE_CALLERS: pav,pbsv,sawfish,sniffles,delly,cutesv
 REFV: CHM13
+CROSS_CALLER_PARAMS: "--pctseq 0.9 --pctsize 0.9 --refdist 500"
 REF:
   CHM13: /net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/T2T-CHM13v2.fasta
   GRCh38: /net/eichler/vol28/eee_shared/assemblies/hg38/no_alt/hg38.no_alt.fa
