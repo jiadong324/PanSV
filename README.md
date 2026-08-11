@@ -70,6 +70,8 @@ Briefly, these regions include UCSC gaps and centromere on GRCh38.
 For T2T-CHM13, complex regions include centromere, acrocentric p-arms, satellite regions except for monomeric satellite.
 
 
+**NOTE:** TR repeat genotypes are not included in the current persample SV calling output. More benchmarks have to be done for this to be added. 
+
 
 ## Cohort-level reference panel
 
