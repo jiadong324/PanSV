@@ -78,12 +78,12 @@ For T2T-CHM13, complex regions include centromere, acrocentric p-arms, satellite
 **NOTE:** For the current SV reference panel created from HPRC/HGSVC phased assemblies, we did not do additional phasing of SVs and SNPs because they are called from same haplotype input.
 
 ### Callable regions
-We first defined the callable regions for each genome. HGSVC/HPRC and 1KG-ONT callable regions were created by PAV based on the assembly to reference alignment. 
+We first defined the callable regions for each genome. HGSVC/HPRC and UW-ONT callable regions were created by PAV based on the assembly to reference alignment. 
 For IB-ONT genomes, we splitted the PMDV phased BAM into two read sets. The callable regions for each haplotype were created by merging each read set (>= 3 reads) into non–overlapping intervals with BEDtools merge ‘-d 500’. 
 
 ### Create callset
 
-The non-redundant set integrated SVs from HPRC, HGSVC, UW-ONT and IB-ONT genomes with coverage >= 15x and read N50 >=15 kbp. 
+The non-redundant set integrated SVs from HPRC, HGSVC, UW-ONT and BI-ONT genomes with coverage >= 15x and read N50 >=15 kbp. 
 Truvari (v5.2.0) was used to create the non-redundant SV set for both references with ‘--pctseq 0.90 –pctsize 0.90 –refdist 500 –keep common’. 
 Briefly, different alleles at the same SV site were collapsed if they share minimum 90% sequence similarity and 90% allele size similarity. 
 The calls with the highest quality predicted by BoostSV were used to represent each collapsed SV site. 

@@ -27,9 +27,7 @@ rule bcftool_all:
     input:
         vcf="results/{sample}/caller_vcf_list.txt"
     output:
-        outvcf="results/{sample}/caller_merge/insdel.tmp.vcf.gz"
-    log:
-        "log/results/{sample}.bcftool.log",
+        outvcf="results/{sample}/{caller_merge}/insdel.tmp.vcf.gz"
     resources:
         mem=10,
         hrs=24,
@@ -47,10 +45,8 @@ rule truvari:
     input:
         bcfvcf=rules.bcftool_all.output.outvcf
     output:
-        removed="results/{sample}/caller_merge/removed.vcf.gz",
-        collapse="results/{sample}/caller_merge/truvari_collapsed.insdel.vcf.gz"
-    log:
-        "log/results/{sample}.truvari.log",
+        removed="results/{sample}/{caller_merge}/removed.vcf.gz",
+        collapse="results/{sample}/{caller_merge}/truvari_collapsed.insdel.vcf.gz"
     resources:
         mem=10,
         hrs=24,
@@ -72,12 +68,12 @@ rule parse_truvari_collapse:
     params:
         callers=MERGE_CALLERS,
     output:
-        filt_vcf="results/{sample}/caller_merge/truvari_collapsed.insdel.filt.vcf",
-        pav_supp_vcf="results/{sample}/caller_merge/truvari_collapsed.insdel.pav-supp.vcf",
-        pav_read_supp_vcf="results/{sample}/caller_merge/truvari_collapsed.insdel.pav-read-supp.vcf",
-        filt_bed="results/{sample}/caller_merge/truvari_collapsed.insdel.pav-supp.bed.gz",
-        pav_read_supp_bed="results/{sample}/caller_merge/truvari_collapsed.insdel.pav-read-supp.bed.gz",
-        pav_bed="results/{sample}/caller_merge/truvari_collapsed.insdel.pav-only.bed.gz",
+        filt_vcf="results/{sample}/{caller_merge}/truvari_collapsed.insdel.filt.vcf",
+        pav_supp_vcf="results/{sample}/{caller_merge}/truvari_collapsed.insdel.pav-supp.vcf",
+        pav_read_supp_vcf="results/{sample}/{caller_merge}/truvari_collapsed.insdel.pav-read-supp.vcf",
+        filt_bed="results/{sample}/{caller_merge}/truvari_collapsed.insdel.pav-supp.bed.gz",
+        pav_read_supp_bed="results/{sample}/{caller_merge}/truvari_collapsed.insdel.pav-read-supp.bed.gz",
+        pav_bed="results/{sample}/{caller_merge}/truvari_collapsed.insdel.pav-only.bed.gz",
     resources:
         mem=10,
         hrs=24,
@@ -90,11 +86,11 @@ rule parse_truvari_collapse:
 
 rule index_filt_vcf:
     input:
-        filt_vcf="results/{sample}/caller_merge/truvari_collapsed.insdel.filt.vcf",
-        pav_supp_vcf="results/{sample}/caller_merge/truvari_collapsed.insdel.pav-supp.vcf"
+        filt_vcf="results/{sample}/{caller_merge}/truvari_collapsed.insdel.filt.vcf",
+        pav_supp_vcf="results/{sample}/{caller_merge}/truvari_collapsed.insdel.pav-supp.vcf"
     output:
-        gzip="results/{sample}/caller_merge/truvari_collapsed.insdel.filt.vcf.gz",
-        gzip_pav="results/{sample}/caller_merge/truvari_collapsed.insdel.pav-supp.vcf.gz",
+        gzip="results/{sample}/{caller_merge}/truvari_collapsed.insdel.filt.vcf.gz",
+        gzip_pav="results/{sample}/{caller_merge}/truvari_collapsed.insdel.pav-supp.vcf.gz",
     resources:
         mem=10,
         hrs=24,

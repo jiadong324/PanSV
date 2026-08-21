@@ -31,10 +31,12 @@ DETECT_CALLERS = config.get('DETECT_CALLERS')
 
 ## Parameters for cross caller integration
 CROSS_CALLER_PARAMS = config.get('CROSS_CALLER_PARAMS')
-
+CROSS_CALLER_SETV = 'caller_merge_{0}'.format(len(MERGE_CALLERS.split(',')))
 
 SAMPLES = pd.read_csv(ALN_TABLE_FILENAME, sep='\t', index_col=['SAMPLE'])
 REF = config.get('REF')
+
+
 
 
 include: "rules/caller_detect.smk"
@@ -56,7 +58,7 @@ rule norm:
 
 rule cross_caller:
     input:
-        expand('results/{sample}/caller_merge/truvari_collapsed.insdel.pav-supp.vcf.gz', sample=SAMPLES.index),
+        expand('results/{sample}/{caller_merge}/truvari_collapsed.insdel.pav-supp.vcf.gz', sample=SAMPLES.index, caller_merge=CROSS_CALLER_SETV),
     message:
         "Cross caller integration complete"
 
