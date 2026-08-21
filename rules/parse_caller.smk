@@ -27,14 +27,17 @@ rule norm_caller_vcf:
         module load modules modules-init modules-gs/prod modules-eichler/prod truvari/4.3.1
         if [ {wildcards.caller} == longcallD ]
         then
-            bcftools norm --multiallelics - --output-type v {input.vcf}| bcftools view -i "(SVTYPE=='INS'||SVTYPE=='DEL')&FILTER=='PASS'" -O v - | bcftools sort -o /dev/stdout -O v - | bgzip -c > {output.insdel}
+            bcftools norm --multiallelics - --output-type v {input.vcf}| bcftools view -i "(SVTYPE=='INS'||SVTYPE=='DEL')&FILTER=='PASS'" -O v - | bcftools sort -o /dev/stdout -O u - | bgzip -c > results/{wildcards.sample}/longcallD.tmp.vcf
+            bcftools view -h results/{wildcards.sample}/longcallD.tmp.vcf | sed 's/ID=SVLEN,Number=A,Type=Integer/ID=SVLEN,Number=1,Type=Integer/' | bcftools reheader -h /dev/stdin results/{wildcards.sample}/longcallD.tmp.vcf | bcftools view /dev/stdin | awk 'BEGIN {{OFS="\t"}} /^#/ {{print; next}} {{$6=1; print}}'| bcftools view -Oz -o {output.insdel}
             tabix -p vcf {output.insdel}
+            rm results/{wildcards.sample}/longcallD.tmp.vcf
             
         elif [ {wildcards.caller} == pav ]
         then
             python {PIPELINE_DIR}/scripts/Pav2SV.py {input.vcf} {wildcards.sample} | bcftools norm --multiallelics - --output-type v /dev/stdin | python {PIPELINE_DIR}/scripts/resolve.py /dev/stdin pav {params.ref} |  bcftools norm --check-ref s --fasta-ref {params.ref} -N -m-any > results/{wildcards.sample}/pav.tmp.vcf
             bcftools view -i "SVTYPE=='INS'||SVTYPE=='DEL'" -O v results/{wildcards.sample}/pav.tmp.vcf | bcftools sort -o /dev/stdout -O v - | bgzip -c > {output.insdel}
             tabix -p vcf {output.insdel}
+            rm results/{wildcards.sample}/{wildcards.caller}.tmp.vcf  
 
         elif [ {wildcards.caller} == dipcall ]
         then
@@ -46,15 +49,13 @@ rule norm_caller_vcf:
             bcftools norm --multiallelics - --output-type v {input.vcf} | python {PIPELINE_DIR}/scripts/resolve.py /dev/stdin svimasm | bcftools norm --check-ref s --fasta-ref {params.ref} -N -m-any > results/{wildcards.sample}/hapdiff.tmp.vcf
             bcftools view -i "SVTYPE=='INS'||SVTYPE=='DEL'" -O v results/{wildcards.sample}/hapdiff.tmp.vcf | bcftools sort -o /dev/stdout -O v - | bgzip -c > {output.insdel}
             tabix -p vcf {output.insdel}
-
+            rm results/{wildcards.sample}/{wildcards.caller}.tmp.vcf  
         else
             bcftools norm --multiallelics - --output-type v {input.vcf} | python {PIPELINE_DIR}/scripts/resolve.py /dev/stdin {wildcards.caller} {params.ref} |  bcftools norm --check-ref s --fasta-ref {params.ref} -N -m-any | bcftools annotate -x 'INFO/AF,INFO/STRAND' > results/{wildcards.sample}/{wildcards.caller}.tmp.vcf
             bcftools view -i "(SVTYPE=='INS'||SVTYPE=='DEL')&FILTER=='PASS'" -O v results/{wildcards.sample}/{wildcards.caller}.tmp.vcf | bcftools sort -o /dev/stdout -O v - | bgzip -c > {output.insdel}           
             tabix -p vcf {output.insdel}
-            
+            rm results/{wildcards.sample}/{wildcards.caller}.tmp.vcf    
         fi
-        
-        rm results/{wildcards.sample}/{wildcards.caller}.tmp.vcf
         """
 
 rule parse_caller:

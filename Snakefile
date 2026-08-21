@@ -44,6 +44,10 @@ include: "rules/parse_caller.smk"
 include: "rules/intra_sample_collapse.smk"
 # include: "rules/intra_sample_stats.smk"
 
+rule all:
+    input:
+        expand("results/{sample}/all_done",sample=SAMPLES.index)
+
 rule detect:
     input:
         expand('results/{sample}/caller_detect.done', sample=SAMPLES.index)
@@ -62,9 +66,13 @@ rule cross_caller:
     message:
         "Cross caller integration complete"
 
+rule gather_outputs_per_sample:
+    input:
+        rules.detect.input,
+        rules.norm.input,
+        rules.cross_caller.input
+    output:
+        flag = touch("results/{sample}/all_done")
 
-#
-# rule stats:
-#     input:
-#         stats=rules.intra_sample_stats.input
+
 

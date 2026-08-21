@@ -43,7 +43,7 @@ rule sawfish_call:
     input:
         bcf = 'results/{sample}/sawfish_disc/candidate.sv.bcf'
     output:
-        vcf = 'results/{sample}/{sample}.sawfish.vcf.gz'
+        vcf= 'results/{sample}/genotyped.sv.vcf.gz'
     resources:
         mem = 50,
         hrs = 24,
@@ -54,11 +54,28 @@ rule sawfish_call:
         source /etc/profile.d/modules.sh
         module load modules modules-init modules-gs/prod modules-eichler/prod sawfish/0.12.4
         sawfish joint-call --threads {threads} --sample $( dirname {input.bcf} ) --clobber --output-dir $( dirname {output.vcf} )
-        mv results/{wildcards.sample}/genotyped.sv.vcf.gz {output.vcf}
-        tabix -p vcf {output.vcf}
-        rm results/{wildcards.sample}/genotyped.sv.vcf.gz results/{wildcards.sample}/genotyped.sv.vcf.gz.tbi
         """
 
+rule rename_sawfish:
+    input:
+        'results/{sample}/genotyped.sv.vcf.gz'
+    output:
+        'results/{sample}/{sample}.sawfish.vcf.gz'
+    resources:
+        mem=50,
+        hrs=24,
+        disk_free=1,
+    shell:
+        """
+        source /etc/profile.d/modules.sh
+        module load modules modules-init modules-gs/prod modules-eichler/prod sawfish/0.12.4
+        mv {input} {output}
+        tabix -p vcf {output}
+        """
+
+# mv results/{wildcards.sample}/genotyped.sv.vcf.gz {output.vcf}
+# tabix -p vcf {output.vcf}
+# rm results/{wildcards.sample}/genotyped.sv.vcf.gz results/{wildcards.sample}/genotyped.sv.vcf.gz.tbi
 
 rule sniffles:
      input:
@@ -301,6 +318,6 @@ rule svisionpro:
 rule caller_detect:
     input:
         expand("results/{sample}/{sample}.{var_caller}.vcf.gz", sample=SAMPLES.index, var_caller=DETECT_CALLERS.split(',')),
-        # expand("results/{sample}/hapdiff_phased.vcf.gz", sample=SAMPLES.index)
+        # expand("results/{sample}/genotyped.sv.vcf.gz", sample=SAMPLES.index)
     output:
         flag= touch('results/{sample}/caller_detect.done')
