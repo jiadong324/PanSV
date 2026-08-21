@@ -22,15 +22,29 @@ Minimap2 v2.28 is used to align assembly to both references. The alignment pipel
 
 **NOTE:** This pipeline currently dose not support alignment.
 
-### SV callers
+### Run SV callers
 
-To detect SVs for each genome, simply run ```./rundist detect 50``` or a dry-run with ```./rundist detect 50 -np```
+To detect SVs for each genome, simply run ```./rundist 50 detect``` or a dry-run with ```./rundist 50 detect -np```.
 
+**NOTE:** You have to run assembly-based caller yourself. 
+Move them under ```results/{sample}/``` and name as ```{sample}.{caller}.vcf.gz``` for further processing 
+
+### Generate per-genome SV
+
+Run ```./rundist 50```.
 This will create ```{sample}.{caller}.insdel.vcf``` and a summary table of SVs detected by different caller for each sample ```{sample}.caller_summary.txt```.
 
 The ```{sample}.{caller}.insdel.vcf``` will be used to create a high-quality per genome SV callset.
 
-The current pipeline supports the following callers. 
+For each genome, we prioritize the PAV calling results and identify SVs supported by at least one another caller with [Truvari (v5.2.0)](https://github.com/acenglish/truvari). 
+The output is a multi-caller integrated VCF used the PAV reported breakpoint, sv length, phased genotype etc.
+We then run [BoostSV](https://github.com/jiadong324/BoostSV) on the multi-caller integrated VCF for each genome.
+
+We also used the same annotation as [Logsdon et al. Nature 2025](https://www.nature.com/articles/s41586-025-09140-6) to exclude SVs inside complex regions, gaps, etc. 
+Briefly, these regions include UCSC gaps and centromere on GRCh38. 
+For T2T-CHM13, complex regions include centromere, acrocentric p-arms, satellite regions except for monomeric satellite.
+
+The current pipeline supports the integration of the following callers. 
 
 | Tool        | Input type | Version | Website                                       |
 |-------------|------------|---------|-----------------------------------------------|
@@ -57,18 +71,6 @@ Tandem repeat catalogs for GRCh38 and T2T-CHM13 can be found [here](https://zeno
 |--------|------------|---------|---------------------|----------------|
 | TRGT   | HiFi       | v1.4.1  | HPRC, HGSVC, UW-ONT | Tandem repeats |
 | vamos  | Assembly   | v2.1.5  | HPRC, HGSVC, UW-ONT | Tandem repeats |
-
-
-### Per genome SV
-
-For each genome, we prioritize the PAV calling results and identify SVs supported by at least one another caller with [Truvari (v5.2.0)](https://github.com/acenglish/truvari). 
-The pipeline is ```rules/intra_sample_collapse.smk```. The output of this pipeline is a multi-caller integrated VCF used the PAV reported breakpoint, sv length, phased genotype etc.
-We then run [BoostSV](https://github.com/jiadong324/BoostSV) on the multi-caller integrated VCF for each genome.
-
-We also used the same annotation as [Logsdon et al. Nature 2025](https://www.nature.com/articles/s41586-025-09140-6) to exclude SVs inside complex regions, gaps, etc. 
-Briefly, these regions include UCSC gaps and centromere on GRCh38. 
-For T2T-CHM13, complex regions include centromere, acrocentric p-arms, satellite regions except for monomeric satellite.
-
 
 **NOTE:** TR repeat genotypes are not included in the current persample SV calling output. More benchmarks have to be done for this to be added. 
 
