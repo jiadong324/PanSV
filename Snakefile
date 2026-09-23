@@ -42,7 +42,7 @@ REF = config.get('REF')
 include: "rules/caller_detect.smk"
 include: "rules/parse_caller.smk"
 include: "rules/intra_sample_collapse.smk"
-# include: "rules/intra_sample_stats.smk"
+include: "rules/inter_sample_collapse.smk"
 
 rule all:
     input:
@@ -75,4 +75,8 @@ rule gather_outputs_per_sample:
         flag = touch("results/{sample}/all_done")
 
 
-
+rule inter_sample:
+    input:
+        expand('results/inter_sample/{caller_merge}/disco_truvari_collapsed.tsv.gz', caller_merge=CROSS_CALLER_SETV),
+    message:
+        "Cross caller integration complete"

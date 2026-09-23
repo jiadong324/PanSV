@@ -5,6 +5,7 @@ import pandas as pd
 global SAMPLES
 global MERGE_CALLERS
 global REF_DICT
+global CROSS_CALLER_SETV
 
 def assign_disc_class(samples: int, total: int):
     if samples == 1:
@@ -20,29 +21,35 @@ def assign_disc_class(samples: int, total: int):
 
 rule sample_vcf_list:
     input:
-        sample_vcf = expand("{refv}/{sample}/caller_merge/truvari_collapsed.insdel.pav-supp.vcf.gz",sample=SAMPLES.index,calllers=MERGE_CALLERS.split(','),refv=REF_DICT.key())
+        sample_vcf = expand("results/{sample}/{caller_merge}/truvari_collapsed.insdel.pav-supp.vcf.gz", sample=SAMPLES.index, caller_merge=CROSS_CALLER_SETV)
     output:
-        vcf_list = '{refv}/vcf_list.txt'
-
-rule bcftool:
-    input:
-        vcf = vcf_list
-    output:
-        outvcf = "disco_bcftools_merge.normed.vcf.gz"
+        vcf_list = 'results/inter_sample/{caller_merge}/sample_vcf.txt'
     resources:
         mem=10,
         hrs=24,
         disk_free=1,
-    envmodules:
-        "modules",
-        "modules-init",
-        "modules-gs/prod",
-        "modules-eichler/prod",
-        "miniconda/4.12.0"
+    run:
+        fout = open(output.vcf_list,'w')
+        for a_vcf in input.sample_vcf:
+            print(a_vcf,file=fout)
+        fout.close()
+
+
+rule bcftool:
+    input:
+        vcf = rules.sample_vcf_list.output.vcf_list
+    output:
+        outvcf = "results/inter_sample/{caller_merge}/disco_bcftools_merge.normed.vcf.gz"
+    resources:
+        mem=10,
+        hrs=24,
+        disk_free=1,
     threads: 5
     shell:
         """
-        bcftools merge --threads 5 --merge none --force-samples --file-list {input.vcf} -O z | bcftools norm --threads {threads} --do-not-normalize --multiallelics -any --output-type z -o {output.outvcf}
+        source /etc/profile.d/modules.sh
+        module load modules modules-init modules-gs/prod modules-eichler/prod miniconda/4.12.0
+        bcftools merge --threads {threads} --merge none --force-samples --file-list {input.vcf} -O z | bcftools norm --threads {threads} --do-not-normalize --multiallelics -any --output-type z -o {output.outvcf}
         tabix -p vcf {output.outvcf}
         """
 
@@ -50,36 +57,36 @@ rule truvari_collapse:
     input:
         vcf = rules.bcftool.output.outvcf,
     output:
-        removed_vcf = "disco_truvari_removed.vcf.gz",
-        collapsed_vcf = "disco_truvari_collapsed.vcf.gz",
-        samples = "samples.out"
-    resources:
-        mem=64,
-        hrs=24,
-    threads: 4
+        removed_vcf = "results/inter_sample/{caller_merge}/disco_truvari_removed.vcf.gz",
+        collapsed_vcf = "results/inter_sample/{caller_merge}/disco_truvari_collapsed.vcf.gz",
+        samples = "results/inter_sample/{caller_merge}/samples.out"
     params:
         opts=config.get("truvari_opts")
     shell:
         """
-        truvari collapse --input {input.vcf} --collapsed-output {output.removed_vcf} --sizemin 50 --sizemax 100000 --keep common --gt all {params.opts} | bcftools sort --max-mem $( expr {threads} \\* {resources.mem} )G --output-type z > {output.collapsed_vcf}
+        source /etc/profile.d/modules.sh
+        module load modules modules-init modules-gs/prod modules-eichler/prod truvari/5.2.0
+        truvari collapse --input {input.vcf} --collapsed-output {output.removed_vcf} --sizemin 50 --sizemax 100000 --keep common --gt all {params.opts} | bcftools sort --output-type z > {output.collapsed_vcf}
         tabix -p vcf {output.collapsed_vcf}
         bcftools query -l {output.collapsed_vcf} > {output.samples}
         """
 
 rule collapse_data_table:
     input:
-        vcf="disco_truvari_collapsed.vcf.gz",
-        samples = "samples.out"
+        vcf="results/inter_sample/{caller_merge}/disco_truvari_collapsed.vcf.gz",
+        samples = "results/inter_sample/{caller_merge}/samples.out"
     output:
-        bed="tables/disco_truvari_collapsed.bed.gz",
-        tsv="tables/disco_truvari_collapsed.tsv.gz",
-        haps="tables/disco_truvari_collapsed_haps.bed.gz"
+        bed="results/inter_sample/{caller_merge}/disco_truvari_collapsed.bed.gz",
+        tsv="results/inter_sample/{caller_merge}/disco_truvari_collapsed.tsv.gz",
+        haps="results/inter_sample/{caller_merge}/disco_truvari_collapsed_haps.bed.gz"
     threads: 1
     resources:
         mem=10,
         hrs=24,
         disk_free=1,
     run:
+        import pysam
+
         sample_list = [line.strip() for line in open(input.samples)]
         sample_haps = []
         for sample in sample_list:
@@ -124,7 +131,3 @@ rule collapse_data_table:
 
         pd.DataFrame(all_haps, columns=haps_header).to_csv(output.haps, compression='gzip', sep='\t', index=False, header=True)
 
-
-rule inter_sample:
-    input:
-        "tables/disco_truvari_collapsed.bed.gz",
